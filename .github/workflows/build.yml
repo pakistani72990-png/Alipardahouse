@@ -1,11 +1,8 @@
+name: Build Offline APK
 
-name: Build Calculator APK
- 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ main ]
 
 jobs:
   build:
@@ -13,44 +10,58 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
 
-      - name: Auto Create Folder and Move Files
+      # ------------------------------------------------------------------
+      # CRITICAL STEP: Server se Files Download karke Embed karna
+      # ------------------------------------------------------------------
+      - name: Download Website Files from Server
         run: |
           mkdir -p www
-          cp index.html www/index.html
+          # Option A: Agar aap ki tamam static files server par hain (wget mirror)
+          wget --mirror --convert-links --adjust-extension --page-requisites --no-parent -P www https://your-server-domain.com/
+          
+          # Download ki hui index file ko correct path par set karna
+          mv www/your-server-domain.com/* www/ 2>/dev/null || true
 
+      # ------------------------------------------------------------------
+      # App Icon Generate karna
+      # ------------------------------------------------------------------
+      - name: Generate App Icons
+        run: npx @capacitor/assets generate --android
+
+      # ------------------------------------------------------------------
+      # Capacitor Sync & Build (Files Offline APK me Bundle hongi)
+      # ------------------------------------------------------------------
       - name: Add Android Platform
         run: npx cap add android
 
-      - name: Sync Capacitor
+      - name: Sync Web Assets into Native APK
         run: npx cap sync android
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
       - name: Build Android APK
         run: |
           cd android
-          chmod +x gradlew
           ./gradlew assembleDebug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: calculator-app.apk
+          name: Alipardahouse-Release
           path: android/app/build/outputs/apk/debug/app-debug.apk
