@@ -1,7 +1,5 @@
-
 {
-  "appId": "com.calculator.app",
-  "appName": "Offline Calculator",
-  "webDir": "www",
-  "bundledWebRuntime": false
+  "appId": "com.alipardahouse.calculator",
+  "appName": "Calculator",
+  "webDir": "www"
 }
