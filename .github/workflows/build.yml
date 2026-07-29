@@ -3,6 +3,7 @@ name: Build Offline APK
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -10,58 +11,36 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
 
       - name: Install Dependencies
         run: |
           npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
 
-      # ------------------------------------------------------------------
-      # CRITICAL STEP: Server se Files Download karke Embed karna
-      # ------------------------------------------------------------------
-      - name: Download Website Files from Server
+      - name: Add Android Platform & Sync
         run: |
-          mkdir -p www
-          # Option A: Agar aap ki tamam static files server par hain (wget mirror)
-          wget --mirror --convert-links --adjust-extension --page-requisites --no-parent -P www https://your-server-domain.com/
-          
-          # Download ki hui index file ko correct path par set karna
-          mv www/your-server-domain.com/* www/ 2>/dev/null || true
-
-      # ------------------------------------------------------------------
-      # App Icon Generate karna
-      # ------------------------------------------------------------------
-      - name: Generate App Icons
-        run: npx @capacitor/assets generate --android
-
-      # ------------------------------------------------------------------
-      # Capacitor Sync & Build (Files Offline APK me Bundle hongi)
-      # ------------------------------------------------------------------
-      - name: Add Android Platform
-        run: npx cap add android
-
-      - name: Sync Web Assets into Native APK
-        run: npx cap sync android
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+          npx cap add android || true
+          npx cap sync android
 
       - name: Build Android APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: Alipardahouse-Release
           path: android/app/build/outputs/apk/debug/app-debug.apk
