@@ -1,6 +1,8 @@
 {
   "appId": "com.alipardahouse.app",
-  "appName": "Alipardahouse",
+  "appName": "Ali Parda House",
   "webDir": "www",
-  "bundledWebRuntime": false
+  "server": {
+    "entryHTML": "new_project.html"
+  }
 }
